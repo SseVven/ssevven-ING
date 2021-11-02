@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="Author" content="SseVven" />
+    <meta name="Copyright" content="SseVven" />
+    <meta name="keywords" content="SseVven" />
+    <meta name="description" content="Education" />
+    <link rel="shortcut Icon" href="https://www.bilibili.com/favicon.ico" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+      integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu"
+      crossorigin="anonymous"
+    />
+    <title>注册</title>
+    <style>
+      body {
+  background-color: #f2f2f5;
+}
+.copyright {
+  text-align: center;
+  font-size: 12px;
+  padding: 20px;
+}
+section {
+  background-color: #fff;
+}
+.main-section-loginForm {
+  padding: 40px;
+}
+.login-logo {
+  margin-bottom: 30px;
+  margin-left: 10px;
+  box-shadow: 0 2px 6px #e6ecf1;
+}
+.header-section-login {
+  padding: 40px;
+}
+.login-form-submit {
+  float: right;
+}
+.userExist::-webkit-input-placeholder {
+            color: #f44747;
+}
+.registSuccess::-webkit-input-placeholder {
+            color: #3bcf40;
+}
+    </style>
+  </head>
+
+  <body>
+    <!-- 登录title -->
+    <header>
+      <section class="container header-section-login">
+          <span>
+            <a href="{{.Login}}"><img src="http://r.photo.store.qq.com/psc?/V12W7vpq3AXwdk/45NBuzDIW489QBoVep5mcV1603gaiSFp3Xob1nxhzA9bo0Km4fpvNpr7UWWE7LRz39HH.J4*RcLOFlZGWN3mgYdQ6X7XwPARpdGxZ7RBLnI!/r" class="img-responsive img-circle login-logo" alt="log"></a>
+          </span>
+          <h1>注册 SseVven 账号</h1>
+      </section>
+    </header>
+    <main>
+      <!-- 登录表单 -->
+      <section class="container main-section-loginForm">
+        <form >
+            <div class="form-group">
+              <label for="login-uname">用户名</label>
+              <input
+                type="text"
+                class="form-control"
+                id="login-uname"
+                placeholder="用户名"
+              />
+            </div>
+          <div class="form-group">
+            <label for="login-pwd">密码</label>
+            <input
+              type="password"
+              class="form-control"
+              id="login-pwd"
+              placeholder="密码"
+            />
+          </div>
+          <input id="submit" type="button" class="btn btn-primary login-form-submit" value="注册"></input>
+        </form>
+      </section>
+    </main>
+    <!-- 版权说明 -->
+    <footer>
+      <section class="container copyright">
+        <span class="text-muted">Copyright © 2021 SseVven<br>
+        Powered by <a href="#">SseVven</a> · Theme by <a href="#">SseVven</a>
+        </span>
+      </section>
+    </footer>
+  <script
+    src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"
+    integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ"
+    crossorigin="anonymous"
+  ></script>
+  <script>
+        $(document).ready(function(){
+            $("#submit").click(function(){
+                $("#submit").attr("disabled","disabled");
+                username=$("#login-uname").val();
+                password=$("#login-pwd").val();
+                $.ajax({
+                    type: 'POST',
+                    url: "{{.RegistAction}}",
+                    // contentType:"application/json; charset=utf-8",
+                    dataType:'json',
+                    data: {username:username,password:password},
+                    timeout: 5000,
+                    beforeSend:function(){
+                      $("#login-pwd").attr("placeholder","密码");
+                      $("#login-pwd").removeClass('registSuccess');
+                      $("#login-uname").removeClass('userExist');
+                      $("#login-uname").attr("placeholder","用户名");
+                    },
+                    error:function(){
+                      alert("服务器返回超时，请重新注册")
+                      $("#submit").attr("disabled",false);
+                    },
+                    success: function(res){
+                        $("#submit").attr("disabled",false);
+                        if (res.code == 200) {
+                          $("#login-pwd").val("");
+                          $("#login-pwd").attr("placeholder",res.msg+"√");
+                          $("#login-pwd").addClass('registSuccess');
+                        } else if(res.code == 220){
+                          $("#login-uname").val("");
+                          $("#login-pwd").val("");
+                          $("#login-uname").attr("placeholder",res.msg+"×");
+                          $("#login-uname").addClass('userExist');
+                        }    
+                    },
+                });
+            });
+        });
+</script>
+  <!-- <script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
+    integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
+    crossorigin="anonymous"
+  ></script> -->
+  </body>
+</html>

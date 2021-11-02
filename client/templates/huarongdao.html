@@ -1,0 +1,260 @@
+<section class="container">
+  <div class="row">
+    <div class="col-xs-4 timeShow">时间(秒数)</div>
+    <button
+      class="btn btn-primary col-xs-4"
+      type="button"
+      data-toggle="collapse"
+      data-target="#mode"
+    >
+      难度
+    </button>
+    <button id="myButton" type="button" class="btn btn-success col-xs-4">
+      开始
+    </button>
+    <div class="collapse" id="mode">
+      <div class="container">
+        <button id="mode-easy" type="button" class="btn btn-success col-xs-4">
+          easy
+        </button>
+        <button id="mode-normal" type="button" class="btn btn-warning col-xs-4">
+          normal
+        </button>
+        <button id="mode-hard" type="button" class="btn btn-danger col-xs-4">
+          hard
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="container board">
+  <ul id="nodes" class="nodes row">
+    <!-- <li class="col-xs-3">1</li> -->
+  </ul>
+</section>
+
+<script>
+  //游戏1脚本
+  $(document).ready(function () {
+    let time = $(".timeShow");
+    let start = $("#myButton");
+    let timeClock = null;
+    let boardClock = null;
+    //初始为easy
+    modeSet(3);
+    function clearTime() {
+      //关闭计时器
+      time.text("0.00s");
+    }
+    function startTime() {
+      time.html((parseFloat(time.html()) + 0.01).toFixed(2) + "s");
+    }
+    //开启一盘game
+    start.on("click", function () {
+      if (start.text() == "开始") {
+        //打乱棋盘
+        goRun();
+        //棋盘可移动设置
+        moveSet(true);
+        //开始计时,清除上一把的计时
+        clearTime();
+        timeClock = setInterval(startTime, 10);
+        start.removeClass("btn-success");
+        start.html("暂停");
+        start.addClass("btn-danger");
+      } else if (start.text() == "继续") {
+        //棋盘可移动
+        moveSet(true);
+        //开始计时
+        timeClock = setInterval(startTime, 10);
+        start.removeClass("btn-warning");
+        start.html("暂停");
+        start.addClass("btn-danger");
+      } else {
+        //暂停计时
+        clearInterval(timeClock);
+        //棋盘不可移动
+        moveSet(false);
+        start.removeClass("btn-danger");
+        start.html("继续");
+        start.addClass("btn-warning");
+      }
+    });
+    //棋盘可移动权限
+    function moveSet(flag) {
+      let lis = $("#nodes").children();
+      if (flag) {
+        //可以移动，为每个li注册可点击事件
+        for (let index = 0; index < lis.length; index++) {
+          lis.eq(index).on("click", move);
+        }
+      } else {
+        //不可移动，注销所有li的可点击事件
+        for (let index = 0; index < lis.length; index++) {
+          lis.eq(index).off();
+        }
+      }
+    }
+    //棋盘移动
+    function move() {
+      let lis = $("#nodes").children();
+      let index = $(this).data("index");
+      let degree = Math.sqrt(lis.length);
+      let dom = lis.eq(index - 1);
+      let space;
+      if (index > degree && lis.eq(index - 1 - degree).text() == "") {
+        space = lis.eq(index - 1 - degree);
+      } else if (
+        index <= degree * (degree - 1) &&
+        lis.eq(index - 1 + degree).text() == ""
+      ) {
+        space = lis.eq(index - 1 + degree);
+      } else if (index % degree != 1 && lis.eq(index - 2).text() == "") {
+        space = lis.eq(index - 2);
+      } else if (index % degree != 0 && lis.eq(index).text() == "") {
+        space = lis.eq(index);
+      } else {
+        return;
+      }
+      change(dom, space);
+      for (let index = 0; index < degree * degree - 1; index++) {
+        if (lis.eq(index).text() != lis.eq(index).data("index")) {
+          return;
+        }
+      }
+      clearInterval(timeClock);
+      moveSet(false);
+      startSet();
+    }
+    //棋盘打乱//Todo
+    function goRun() {
+      let lis = $("#nodes").children();
+      let degree = Math.sqrt(lis.length);
+      let spaceIndex = degree * degree - 1;
+      let domIndex;
+      let preRand = 999;
+      for (let i = 0; i < degree * degree * degree * degree; i++) {
+        let rand = parseInt(Math.random() * 4); //0~3
+        if (preRand - rand == 2 || rand - preRand == 2) {
+          i--;
+          continue;
+        }
+        preRand = rand;
+        if (rand == 0) {
+          if (spaceIndex >= degree) {
+            domIndex = spaceIndex - degree;
+          } else {
+            i--;
+            continue;
+          }
+        } else if (rand == 2) {
+          if (spaceIndex < degree * (degree - 1)) {
+            domIndex = spaceIndex + degree;
+          } else {
+            i--;
+            continue;
+          }
+        } else if (rand == 1) {
+          if (spaceIndex % degree != 0) {
+            domIndex = spaceIndex - 1;
+          } else {
+            i--;
+            continue;
+          }
+        } else if (rand == 3) {
+          if (spaceIndex % degree != degree - 1) {
+            domIndex = spaceIndex + 1;
+          } else {
+            i--;
+            continue;
+          }
+        }
+        console.log("domIndex=", domIndex);
+        change(lis.eq(domIndex), lis.eq(spaceIndex));
+        spaceIndex = domIndex;
+      }
+    }
+    function change(dom, space) {
+      space.text(dom.text());
+      dom.text("");
+      dom.removeClass("node-active");
+      dom.removeClass("node-unactive");
+      space.removeClass("node-default");
+      dom.addClass("node-default");
+      if (space.data("index") == space.text()) {
+        space.addClass("node-active");
+      } else {
+        space.addClass("node-unactive");
+      }
+    }
+    //mode初始化
+    //1.关闭计时器(如果上一把没有完成)
+    //2.重新初始化棋盘
+    //3.复原开始按钮
+    //4.不重置计时器，保留上一把的成绩
+    function modeSet(degree) {
+      //3.复原开始按钮
+      startSet();
+      //2.重新初始化棋盘
+      var lis = "";
+      for (var index = 0; index < degree * degree; index++) {
+        lis =
+          lis +
+          "<li class='col-xs-" +
+          12 / degree +
+          "'>" +
+          (index + 1) +
+          "</li>";
+      }
+      let nodesUl = $("#nodes");
+      nodesUl.html(lis);
+      let nodes = nodesUl.children();
+      let width = nodesUl.children(":last-child").outerWidth();
+      nodes.height(width);
+      nodes.css("line-height", width + "px");
+      for (let index = 0; index < degree * degree; index++) {
+        let obj = new Object();
+        obj.index = index + 1;
+        nodes.eq(index).data(obj);
+        nodes.eq(index);
+        // .on("click", function () {
+        // alert($(this).data("index"));
+        // });
+      }
+      nodesUl.children(":last-child").text("");
+      nodes.addClass("node-active");
+      nodesUl.children(":last-child").removeClass("node-active");
+      nodesUl.children(":last-child").addClass("node-default");
+    }
+    function startSet() {
+      //1.关闭计时器(如果上一把没有完成)
+      clearInterval(timeClock);
+      start.removeClass("btn-danger");
+      start.removeClass("btn-warning");
+      start.addClass("btn-success");
+      start.text("开始");
+    }
+    function modeSet3() {
+      $("#mode-normal").css("color", "#fff");
+      $("#mode-hard").css("color", "#fff");
+      $(this).css("color", "#000");
+      modeSet(3);
+    }
+    function modeSet4() {
+      $("#mode-easy").css("color", "#fff");
+      $("#mode-hard").css("color", "#fff");
+      $(this).css("color", "#000");
+      modeSet(4);
+    }
+    function modeSet6() {
+      $("#mode-normal").css("color", "#fff");
+      $("#mode-easy").css("color", "#fff");
+      $(this).css("color", "#000");
+      modeSet(6);
+    }
+    //mode绑定
+    $("#mode-easy").on("click", modeSet3);
+    $("#mode-normal").on("click", modeSet4);
+    $("#mode-hard").on("click", modeSet6);
+  });
+</script>
